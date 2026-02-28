@@ -8,162 +8,138 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      width: 210px;
+      width: 220px;
       background: #111114;
-      color: #e8e8ec;
+      color: #d8d8e0;
       font-family: 'DM Mono', ui-monospace, monospace;
       font-size: 11px;
       overflow: hidden;
     }
 
+    /* ── Top bar ── */
     .top {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 10px 12px 8px;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
+      padding: 10px 12px 9px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
     }
 
     .brand {
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 500;
-      color: rgba(255,255,255,0.35);
-      letter-spacing: 0.08em;
+      color: rgba(255,255,255,0.38);
+      letter-spacing: 0.1em;
       text-transform: uppercase;
     }
 
     .speed-badge {
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 500;
-      color: rgba(255,255,255,0.7);
+      color: #ffffff;
       letter-spacing: -0.3px;
     }
 
     .speed-badge .x {
       font-size: 9px;
-      color: rgba(255,255,255,0.3);
+      color: rgba(255,255,255,0.4);
     }
 
-    /* Site row */
+    /* ── Site row ── */
     .site-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 10px 12px;
+      padding: 11px 12px 10px;
       gap: 8px;
     }
 
-    .site-col {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      min-width: 0;
-    }
+    .site-col { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 
     .site-host {
       font-size: 11px;
-      color: rgba(255,255,255,0.8);
+      color: #e8e8f0;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 130px;
+      max-width: 140px;
     }
 
-    .site-label {
-      font-size: 9px;
-      letter-spacing: 0.05em;
-      color: rgba(255,255,255,0.25);
-    }
+    .site-label { font-size: 9px; letter-spacing: 0.04em; }
+    .site-label.on  { color: rgba(110, 220, 150, 0.85); }
+    .site-label.off { color: rgba(255, 100, 100, 0.75); }
 
-    .site-label.on { color: rgba(120,220,150,0.7); }
-    .site-label.off { color: rgba(255,90,90,0.6); }
-
-    /* Toggle */
-    .tog {
-      position: relative;
-      width: 30px;
-      height: 16px;
-      flex-shrink: 0;
-      cursor: pointer;
-    }
+    /* ── Toggle ── */
+    .tog { position: relative; width: 30px; height: 16px; flex-shrink: 0; cursor: pointer; }
     .tog input { display: none; }
     .tog-track {
-      position: absolute;
-      inset: 0;
+      position: absolute; inset: 0;
       background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.12);
       border-radius: 10px;
       transition: all 0.2s;
     }
     .tog-thumb {
       position: absolute;
-      width: 10px;
-      height: 10px;
+      width: 10px; height: 10px;
       background: rgba(255,255,255,0.3);
       border-radius: 50%;
-      top: 2px;
-      left: 2px;
+      top: 2px; left: 2px;
       transition: all 0.2s;
     }
     .tog.on .tog-track {
       background: rgba(100,210,140,0.15);
-      border-color: rgba(100,210,140,0.4);
+      border-color: rgba(100,210,140,0.45);
     }
-    .tog.on .tog-thumb {
-      left: 16px;
-      background: #78dca0;
-    }
+    .tog.on .tog-thumb { left: 16px; background: #78dca0; }
 
-    /* Reset */
-    .reset-row {
-      padding: 0 12px 10px;
-    }
+    /* ── Reset button ── */
+    .reset-row { padding: 0 12px 11px; }
     .reset-btn {
       width: 100%;
       padding: 6px;
       background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.09);
       border-radius: 6px;
-      color: rgba(255,255,255,0.3);
+      color: rgba(255,255,255,0.45);
       font-family: 'DM Mono', monospace;
       font-size: 10px;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.03em;
       cursor: pointer;
       transition: all 0.15s;
       text-align: center;
     }
     .reset-btn:hover {
-      background: rgba(255,255,255,0.08);
-      color: rgba(255,255,255,0.6);
-      border-color: rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.09);
+      color: rgba(255,255,255,0.75);
+      border-color: rgba(255,255,255,0.16);
     }
 
-    /* Blocked list */
-    .divider {
-      height: 1px;
-      background: rgba(255,255,255,0.06);
-      margin: 0 12px;
-    }
+    /* ── Divider ── */
+    .divider { height: 1px; background: rgba(255,255,255,0.08); margin: 0 12px; }
 
+    /* ── Disabled sites ── */
     .blocked-head {
-      padding: 8px 12px 4px;
+      padding: 8px 12px 5px;
       font-size: 9px;
       letter-spacing: 0.1em;
-      color: rgba(255,255,255,0.2);
+      color: rgba(255,255,255,0.3);
       text-transform: uppercase;
     }
 
     .blocked-list {
-      max-height: 88px;
+      max-height: 96px;       /* ~3 items; scrolls beyond that */
       overflow-y: auto;
       padding: 0 12px 10px;
       display: flex;
       flex-direction: column;
       gap: 3px;
     }
-
-    .blocked-list::-webkit-scrollbar { width: 2px; }
-    .blocked-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+    .blocked-list::-webkit-scrollbar { width: 3px; }
+    .blocked-list::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.12);
+      border-radius: 3px;
+    }
 
     .blocked-item {
       display: flex;
@@ -171,56 +147,69 @@
       justify-content: space-between;
       padding: 4px 7px;
       background: rgba(255,70,70,0.07);
-      border: 1px solid rgba(255,70,70,0.13);
+      border: 1px solid rgba(255,70,70,0.15);
       border-radius: 5px;
       font-size: 10px;
-      color: rgba(255,255,255,0.5);
+      color: rgba(255,255,255,0.6);
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    .blocked-item span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
     }
 
     .blocked-item button {
-      background: none;
-      border: none;
-      color: rgba(255,70,70,0.6);
-      cursor: pointer;
-      font-size: 12px;
-      line-height: 1;
-      padding: 0;
+      background: none; border: none;
+      color: rgba(255,100,100,0.65);
+      cursor: pointer; font-size: 13px;
+      line-height: 1; padding: 0 0 0 6px;
+      flex-shrink: 0;
       transition: color 0.15s;
     }
-    .blocked-item button:hover { color: rgba(255,70,70,1); }
+    .blocked-item button:hover { color: rgba(255,100,100,1); }
 
-    .empty { font-size: 10px; color: rgba(255,255,255,0.15); text-align: center; padding: 6px 0; }
+    .empty { font-size: 10px; color: rgba(255,255,255,0.22); text-align: center; padding: 6px 0; }
 
-    /* Key hint bar */
+    /* ── Shortcuts bar ── */
     .keys {
-      padding: 6px 12px 8px;
-      border-top: 1px solid rgba(255,255,255,0.06);
+      padding: 7px 12px 9px;
+      border-top: 1px solid rgba(255,255,255,0.08);
       display: flex;
       justify-content: center;
-      gap: 10px;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: nowrap;
     }
 
     .k {
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 3px;
       font-size: 9px;
-      color: rgba(255,255,255,0.18);
-      letter-spacing: 0.04em;
+      color: rgba(255,255,255,0.38);
+      letter-spacing: 0.03em;
+      white-space: nowrap;
     }
 
     .k kbd {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 13px;
-      height: 13px;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.1);
+      width: 14px; height: 14px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.13);
       border-radius: 3px;
       font-size: 8px;
       font-family: inherit;
-      color: rgba(255,255,255,0.3);
+      color: rgba(255,255,255,0.5);
+    }
+
+    .k-sep {
+      color: rgba(255,255,255,0.12);
+      font-size: 9px;
     }
   </style>
 </head>
@@ -234,7 +223,7 @@
   <div class="site-row">
     <div class="site-col">
       <div class="site-host" id="siteHost">—</div>
-      <div class="site-label" id="siteLabel">enabled</div>
+      <div class="site-label on" id="siteLabel">active on this site</div>
     </div>
     <label class="tog on" id="togLabel">
       <input type="checkbox" id="togInput" checked>
@@ -252,10 +241,11 @@
   <div class="blocked-list" id="blockedList"></div>
 
   <div class="keys">
-    <div class="k"><kbd>S</kbd> slower</div>
-    <div class="k"><kbd>D</kbd> faster</div>
-    <div class="k"><kbd>A</kbd> reset</div>
-    <div class="k"><kbd>A</kbd> reset</div>
+    <div class="k"><kbd>S</kbd>&nbsp;slower</div>
+    <span class="k-sep">·</span>
+    <div class="k"><kbd>D</kbd>&nbsp;faster</div>
+    <span class="k-sep">·</span>
+    <div class="k"><kbd>A</kbd>&nbsp;reset</div>
   </div>
 
   <script src="popup.js"></script>

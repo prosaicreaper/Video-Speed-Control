@@ -1,11 +1,12 @@
-// content.js - Speedster · in-page HUD
+// content.js - Speedster · in-page HUD v1.2
 
 const DEFAULT_SPEED = 1.0;
 const STEP = 0.1;
 const MIN_SPEED = 0.1;
 const MAX_SPEED = 5.0;
-const HUD_HIDE_DELAY = 2000; // ms before HUD fades out
+const HUD_HIDE_DELAY = 2000;
 
+// Use exact hostname so youtube.com and music.youtube.com are separate
 const hostname = location.hostname;
 
 let currentSpeed = DEFAULT_SPEED;
@@ -29,7 +30,11 @@ function saveSpeed() {
   chrome.storage.sync.get(['siteSpeed'], (data) => {
     const siteSpeed = data.siteSpeed || {};
     siteSpeed[hostname] = currentSpeed;
-    chrome.storage.sync.set({ siteSpeed });
+    chrome.storage.sync.set({ siteSpeed }, () => {
+      // Tell background to update the badge on the active tab
+      chrome.runtime.sendMessage({ type: 'UPDATE_BADGE', speed: currentSpeed, enabled: isEnabled })
+        .catch(() => {});
+    });
   });
 }
 
@@ -52,6 +57,7 @@ function watchMedia() {
       el._speedsterWatched = true;
       el.addEventListener('ratechange', () => {
         if (!isEnabled) return;
+        // Site tried to reset rate — enforce ours
         if (Math.abs(el.playbackRate - currentSpeed) > 0.001) {
           el.playbackRate = currentSpeed;
         }
@@ -69,6 +75,29 @@ const mediaObserver = new MutationObserver(() => {
   watchMedia();
 });
 
+// ─── YouTube soft-navigation (SPA) support ──────────────────────────────────
+// YouTube navigates between videos without a full page reload. We listen for
+// the yt-navigate-finish event and re-apply speed after each navigation.
+
+let _ytNavBound = false;
+function bindYTNavigation() {
+  if (_ytNavBound || !hostname.includes('youtube.com')) return;
+  _ytNavBound = true;
+  window.addEventListener('yt-navigate-finish', () => {
+    if (!isEnabled) return;
+    // Small delay to let YouTube set up its player
+    setTimeout(() => {
+      getMediaElements().forEach(el => {
+        el._speedsterWatched = false; // re-watch after new player init
+        el.playbackRate = currentSpeed;
+      });
+      watchMedia();
+      chrome.runtime.sendMessage({ type: 'UPDATE_BADGE', speed: currentSpeed, enabled: isEnabled })
+        .catch(() => {});
+    }, 800);
+  });
+}
+
 // ─── HUD ────────────────────────────────────────────────────────────────────
 
 function getAnchorVideo() {
@@ -83,7 +112,6 @@ function getAnchorVideo() {
 }
 
 function buildHUD() {
-  // Inject scoped styles once
   if (!document.getElementById('__speedster_style__')) {
     const style = document.createElement('style');
     style.id = '__speedster_style__';
@@ -110,8 +138,7 @@ function buildHUD() {
         pointer-events: auto;
       }
       #__speedster_hud__ .sp-btn {
-        width: 18px;
-        height: 18px;
+        width: 18px; height: 18px;
         border-radius: 50%;
         background: rgba(255,255,255,0.08);
         border: none;
@@ -122,33 +149,22 @@ function buildHUD() {
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 0;
-        margin: 0;
+        padding: 0; margin: 0;
         transition: background 0.12s, transform 0.1s;
         flex-shrink: 0;
         outline: none;
       }
-      #__speedster_hud__ .sp-btn:hover {
-        background: rgba(255,255,255,0.2);
-        color: #fff;
-      }
-      #__speedster_hud__ .sp-btn:active {
-        transform: scale(0.82);
-      }
+      #__speedster_hud__ .sp-btn:hover { background: rgba(255,255,255,0.2); color: #fff; }
+      #__speedster_hud__ .sp-btn:active { transform: scale(0.82); }
       #__speedster_hud__ .sp-val {
-        font-size: 11px;
-        font-weight: 600;
+        font-size: 11px; font-weight: 600;
         color: rgba(255,255,255,0.88);
-        letter-spacing: 0px;
-        min-width: 26px;
-        text-align: center;
-        line-height: 1;
-        padding: 0 1px;
+        min-width: 26px; text-align: center;
+        line-height: 1; padding: 0 1px;
       }
       #__speedster_hud__ .sp-x {
         font-size: 8px;
         color: rgba(255,255,255,0.38);
-        margin-left: 0px;
         vertical-align: 1px;
       }
     `;
@@ -172,25 +188,15 @@ function buildHUD() {
     applySpeed(currentSpeed + STEP);
   });
 
-  // Keep visible while hovering
-  el.addEventListener('mouseenter', () => {
-    clearTimeout(hideTimer);
-    el.style.opacity = '1';
-  });
-  el.addEventListener('mouseleave', () => {
-    scheduleHide();
-  });
+  el.addEventListener('mouseenter', () => { clearTimeout(hideTimer); el.style.opacity = '1'; });
+  el.addEventListener('mouseleave', () => { scheduleHide(); });
 
   return el;
 }
 
 function getHUDContainer() {
-  // In fullscreen, the browser only renders the fullscreen element and its
-  // descendants. Appending the HUD to document.body puts it outside that
-  // subtree, so it's invisible. We must append inside the fullscreen element.
   const fs = document.fullscreenElement || document.webkitFullscreenElement;
-  if (fs) return fs;
-  return document.body;
+  return fs || document.body;
 }
 
 function positionHUD() {
@@ -199,14 +205,12 @@ function positionHUD() {
   const container = getHUDContainer();
   const isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement);
 
-  // Re-parent if the container has changed (e.g. entered/exited fullscreen)
   if (hud.parentElement !== container) {
     hud.remove();
     container.appendChild(hud);
   }
 
   if (isFullscreen) {
-    // In fullscreen the container fills the screen — fixed top-left is reliable
     hud.style.position = 'fixed';
     hud.style.top = '12px';
     hud.style.left = '12px';
@@ -221,10 +225,7 @@ function positionHUD() {
     const positioned = ['relative','absolute','fixed','sticky'].includes(pStyle.position);
 
     if (positioned && parent !== document.body && parent !== document.documentElement) {
-      if (hud.parentElement !== parent) {
-        hud.remove();
-        parent.appendChild(hud);
-      }
+      if (hud.parentElement !== parent) { hud.remove(); parent.appendChild(hud); }
       hud.style.position = 'absolute';
       hud.style.top = '12px';
       hud.style.left = '12px';
@@ -244,15 +245,12 @@ function positionHUD() {
   }
 }
 
-// Re-position HUD whenever fullscreen state changes
 document.addEventListener('fullscreenchange', () => positionHUD());
 document.addEventListener('webkitfullscreenchange', () => positionHUD());
 
 function scheduleHide() {
   clearTimeout(hideTimer);
-  hideTimer = setTimeout(() => {
-    if (hud) hud.style.opacity = '0';
-  }, HUD_HIDE_DELAY);
+  hideTimer = setTimeout(() => { if (hud) hud.style.opacity = '0'; }, HUD_HIDE_DELAY);
 }
 
 function showOrUpdateHUD() {
@@ -260,10 +258,8 @@ function showOrUpdateHUD() {
     hud = buildHUD();
     getHUDContainer().appendChild(hud);
   }
-
   hud.querySelector('#sp-val').innerHTML =
     `${currentSpeed.toFixed(1)}<span class="sp-x">×</span>`;
-
   positionHUD();
   requestAnimationFrame(() => { if (hud) hud.style.opacity = '1'; });
   scheduleHide();
@@ -273,48 +269,33 @@ window.addEventListener('resize', () => {
   if (hud && parseFloat(hud.style.opacity) > 0) positionHUD();
 });
 
-// Use document-level mousemove to detect proximity to video corner.
-// This works even when a UI overlay sits on top of the <video> element
-// (e.g. YouTube's player controls div), which would swallow mouseenter/leave.
+// Proximity hover — works even when overlays block the video element
 let _hoverActive = false;
-
 document.addEventListener('mousemove', (e) => {
   if (!isEnabled) return;
   const video = getAnchorVideo();
   if (!video) return;
 
   const rect = video.getBoundingClientRect();
-  // Hit zone: top-left 120×80px of the video
   const inZone = (
-    e.clientX >= rect.left &&
-    e.clientX <= rect.left + 120 &&
-    e.clientY >= rect.top &&
-    e.clientY <= rect.top + 80
+    e.clientX >= rect.left && e.clientX <= rect.left + 120 &&
+    e.clientY >= rect.top  && e.clientY <= rect.top  + 80
   );
-
-  // Also stay visible if cursor is over the HUD itself
   const overHUD = hud && hud.matches(':hover');
 
   if (inZone || overHUD) {
     if (!_hoverActive) {
       _hoverActive = true;
-      if (!hud) {
-        hud = buildHUD();
-        getHUDContainer().appendChild(hud);
-      }
+      if (!hud) { hud = buildHUD(); getHUDContainer().appendChild(hud); }
       positionHUD();
       requestAnimationFrame(() => { if (hud) hud.style.opacity = '1'; });
     }
     clearTimeout(hideTimer);
   } else {
-    if (_hoverActive) {
-      _hoverActive = false;
-      scheduleHide();
-    }
+    if (_hoverActive) { _hoverActive = false; scheduleHide(); }
   }
 }, { passive: true });
 
-// attachVideoHover kept as no-op so watchMedia calls don't break
 function attachVideoHover(video) {}
 
 // ─── Keys ───────────────────────────────────────────────────────────────────
@@ -333,9 +314,6 @@ document.addEventListener('keydown', (e) => {
   } else if (e.key === 'a' || e.key === 'A') {
     e.preventDefault();
     applySpeed(DEFAULT_SPEED);
-  } else if (e.key === 'a' || e.key === 'A') {
-    e.preventDefault();
-    applySpeed(DEFAULT_SPEED);
   }
 }, true);
 
@@ -347,6 +325,8 @@ chrome.runtime.onMessage.addListener((msg) => {
     if (!isEnabled) {
       getMediaElements().forEach(el => { el.playbackRate = DEFAULT_SPEED; });
       if (hud) hud.style.opacity = '0';
+      chrome.runtime.sendMessage({ type: 'UPDATE_BADGE', speed: currentSpeed, enabled: false })
+        .catch(() => {});
     } else {
       applySpeed(currentSpeed);
     }
@@ -363,7 +343,12 @@ loadState(() => {
       getMediaElements().forEach(el => { el.playbackRate = currentSpeed; });
     }
     watchMedia();
+    bindYTNavigation();
+    // Send initial badge state
+    chrome.runtime.sendMessage({ type: 'UPDATE_BADGE', speed: currentSpeed, enabled: isEnabled })
+      .catch(() => {});
   };
+
   tryApply();
   window.addEventListener('load', tryApply);
 

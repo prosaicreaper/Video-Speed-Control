@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
   "name": "Speedster – Playback Speed Controller",
-  "version": "1.0.0",
-  "description": "Control audio/video playback speed with A/D keys. Disable per site.",
-  "permissions": ["storage", "tabs"],
+  "version": "1.2.0",
+  "description": "Control audio/video playback speed with keyboard shortcuts. Disable per site.",
+  "permissions": ["storage", "tabs", "scripting"],
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
@@ -16,7 +16,8 @@
     {
       "matches": ["<all_urls>"],
       "js": ["content.js"],
-      "run_at": "document_idle"
+      "run_at": "document_idle",
+      "all_frames": true
     }
   ],
   "background": {

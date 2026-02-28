@@ -3,20 +3,16 @@
 let currentHostname = '';
 let tabId = null;
 
-// ── Init: get current tab first, then wire up everything ──────────────────
 chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
   if (!tabs[0]) return;
   tabId = tabs[0].id;
-  try {
-    currentHostname = new URL(tabs[0].url).hostname;
-  } catch { currentHostname = ''; }
+  try { currentHostname = new URL(tabs[0].url).hostname; }
+  catch { currentHostname = ''; }
 
   document.getElementById('siteHost').textContent = currentHostname || 'Unknown site';
 
-  // Wire toggle AFTER we have the hostname
   document.getElementById('togInput').addEventListener('change', (e) => {
-    const enabled = e.target.checked;
-    setEnabled(enabled);
+    setEnabled(e.target.checked);
   });
 
   loadAndRender();
@@ -34,9 +30,8 @@ function loadAndRender() {
     document.getElementById('speedBadge').innerHTML =
       `${speed.toFixed(1)}<span class="x">×</span>`;
 
-    const togLabel = document.getElementById('togLabel');
     const togInput = document.getElementById('togInput');
-    // Temporarily remove listener to avoid re-triggering on programmatic set
+    const togLabel = document.getElementById('togLabel');
     togInput.checked = isEnabled;
     togLabel.className = 'tog ' + (isEnabled ? 'on' : '');
 
@@ -75,7 +70,7 @@ function renderBlocked(disabledSites) {
   disabledSites.forEach(site => {
     const item = document.createElement('div');
     item.className = 'blocked-item';
-    item.innerHTML = `<span>${site}</span><button data-site="${site}">✕</button>`;
+    item.innerHTML = `<span>${site}</span><button data-site="${site}" title="Re-enable">✕</button>`;
     list.appendChild(item);
   });
   list.querySelectorAll('button').forEach(btn => {
