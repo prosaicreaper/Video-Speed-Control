@@ -158,7 +158,7 @@ function buildHUD() {
   const el = document.createElement('div');
   el.id = '__speedster_hud__';
   el.innerHTML = `
-    <button class="sp-btn" id="sp-minus" title="Slower (A)">−</button>
+    <button class="sp-btn" id="sp-minus" title="Slower (S)">−</button>
     <span class="sp-val" id="sp-val">${currentSpeed.toFixed(1)}<span class="sp-x">×</span></span>
     <button class="sp-btn" id="sp-plus" title="Faster (D)">+</button>
   `;
@@ -184,9 +184,35 @@ function buildHUD() {
   return el;
 }
 
+function getHUDContainer() {
+  // In fullscreen, the browser only renders the fullscreen element and its
+  // descendants. Appending the HUD to document.body puts it outside that
+  // subtree, so it's invisible. We must append inside the fullscreen element.
+  const fs = document.fullscreenElement || document.webkitFullscreenElement;
+  if (fs) return fs;
+  return document.body;
+}
+
 function positionHUD() {
   if (!hud) return;
   const video = getAnchorVideo();
+  const container = getHUDContainer();
+  const isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement);
+
+  // Re-parent if the container has changed (e.g. entered/exited fullscreen)
+  if (hud.parentElement !== container) {
+    hud.remove();
+    container.appendChild(hud);
+  }
+
+  if (isFullscreen) {
+    // In fullscreen the container fills the screen — fixed top-left is reliable
+    hud.style.position = 'fixed';
+    hud.style.top = '12px';
+    hud.style.left = '12px';
+    hud.style.bottom = '';
+    return;
+  }
 
   if (video) {
     const parent = video.parentElement;
@@ -204,11 +230,6 @@ function positionHUD() {
       hud.style.left = '12px';
       hud.style.bottom = '';
     } else {
-      // Use fixed coords based on video rect
-      if (hud.parentElement !== document.body) {
-        hud.remove();
-        document.body.appendChild(hud);
-      }
       const rect = video.getBoundingClientRect();
       hud.style.position = 'fixed';
       hud.style.top = (rect.top + 12) + 'px';
@@ -216,17 +237,16 @@ function positionHUD() {
       hud.style.bottom = '';
     }
   } else {
-    // No video — fixed bottom-left
-    if (hud.parentElement !== document.body) {
-      hud.remove();
-      document.body.appendChild(hud);
-    }
     hud.style.position = 'fixed';
     hud.style.top = 'auto';
     hud.style.bottom = '20px';
     hud.style.left = '20px';
   }
 }
+
+// Re-position HUD whenever fullscreen state changes
+document.addEventListener('fullscreenchange', () => positionHUD());
+document.addEventListener('webkitfullscreenchange', () => positionHUD());
 
 function scheduleHide() {
   clearTimeout(hideTimer);
@@ -238,7 +258,7 @@ function scheduleHide() {
 function showOrUpdateHUD() {
   if (!hud) {
     hud = buildHUD();
-    document.body.appendChild(hud);
+    getHUDContainer().appendChild(hud);
   }
 
   hud.querySelector('#sp-val').innerHTML =
@@ -280,7 +300,7 @@ document.addEventListener('mousemove', (e) => {
       _hoverActive = true;
       if (!hud) {
         hud = buildHUD();
-        document.body.appendChild(hud);
+        getHUDContainer().appendChild(hud);
       }
       positionHUD();
       requestAnimationFrame(() => { if (hud) hud.style.opacity = '1'; });
@@ -307,7 +327,7 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'd' || e.key === 'D') {
     e.preventDefault();
     applySpeed(currentSpeed + STEP);
-  } else if (e.key === 'a' || e.key === 'A') {
+  } else if (e.key === 's' || e.key === 'S') {
     e.preventDefault();
     applySpeed(currentSpeed - STEP);
   }
