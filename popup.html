@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Speedster</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      width: 210px;
+      background: #111114;
+      color: #e8e8ec;
+      font-family: 'DM Mono', ui-monospace, monospace;
+      font-size: 11px;
+      overflow: hidden;
+    }
+
+    .top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px 8px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .brand {
+      font-size: 11px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.35);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .speed-badge {
+      font-size: 12px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.7);
+      letter-spacing: -0.3px;
+    }
+
+    .speed-badge .x {
+      font-size: 9px;
+      color: rgba(255,255,255,0.3);
+    }
+
+    /* Site row */
+    .site-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      gap: 8px;
+    }
+
+    .site-col {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .site-host {
+      font-size: 11px;
+      color: rgba(255,255,255,0.8);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 130px;
+    }
+
+    .site-label {
+      font-size: 9px;
+      letter-spacing: 0.05em;
+      color: rgba(255,255,255,0.25);
+    }
+
+    .site-label.on { color: rgba(120,220,150,0.7); }
+    .site-label.off { color: rgba(255,90,90,0.6); }
+
+    /* Toggle */
+    .tog {
+      position: relative;
+      width: 30px;
+      height: 16px;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+    .tog input { display: none; }
+    .tog-track {
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      transition: all 0.2s;
+    }
+    .tog-thumb {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: rgba(255,255,255,0.3);
+      border-radius: 50%;
+      top: 2px;
+      left: 2px;
+      transition: all 0.2s;
+    }
+    .tog.on .tog-track {
+      background: rgba(100,210,140,0.15);
+      border-color: rgba(100,210,140,0.4);
+    }
+    .tog.on .tog-thumb {
+      left: 16px;
+      background: #78dca0;
+    }
+
+    /* Reset */
+    .reset-row {
+      padding: 0 12px 10px;
+    }
+    .reset-btn {
+      width: 100%;
+      padding: 6px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 6px;
+      color: rgba(255,255,255,0.3);
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-align: center;
+    }
+    .reset-btn:hover {
+      background: rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.6);
+      border-color: rgba(255,255,255,0.14);
+    }
+
+    /* Blocked list */
+    .divider {
+      height: 1px;
+      background: rgba(255,255,255,0.06);
+      margin: 0 12px;
+    }
+
+    .blocked-head {
+      padding: 8px 12px 4px;
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      color: rgba(255,255,255,0.2);
+      text-transform: uppercase;
+    }
+
+    .blocked-list {
+      max-height: 88px;
+      overflow-y: auto;
+      padding: 0 12px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .blocked-list::-webkit-scrollbar { width: 2px; }
+    .blocked-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+    .blocked-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 7px;
+      background: rgba(255,70,70,0.07);
+      border: 1px solid rgba(255,70,70,0.13);
+      border-radius: 5px;
+      font-size: 10px;
+      color: rgba(255,255,255,0.5);
+    }
+
+    .blocked-item button {
+      background: none;
+      border: none;
+      color: rgba(255,70,70,0.6);
+      cursor: pointer;
+      font-size: 12px;
+      line-height: 1;
+      padding: 0;
+      transition: color 0.15s;
+    }
+    .blocked-item button:hover { color: rgba(255,70,70,1); }
+
+    .empty { font-size: 10px; color: rgba(255,255,255,0.15); text-align: center; padding: 6px 0; }
+
+    /* Key hint bar */
+    .keys {
+      padding: 6px 12px 8px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .k {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 9px;
+      color: rgba(255,255,255,0.18);
+      letter-spacing: 0.04em;
+    }
+
+    .k kbd {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 13px;
+      height: 13px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 3px;
+      font-size: 8px;
+      font-family: inherit;
+      color: rgba(255,255,255,0.3);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="top">
+    <div class="brand">Speedster</div>
+    <div class="speed-badge" id="speedBadge">1.0<span class="x">×</span></div>
+  </div>
+
+  <div class="site-row">
+    <div class="site-col">
+      <div class="site-host" id="siteHost">—</div>
+      <div class="site-label" id="siteLabel">enabled</div>
+    </div>
+    <label class="tog on" id="togLabel">
+      <input type="checkbox" id="togInput" checked>
+      <div class="tog-track"></div>
+      <div class="tog-thumb"></div>
+    </label>
+  </div>
+
+  <div class="reset-row">
+    <button class="reset-btn" id="resetBtn">↺ reset to 1.0×</button>
+  </div>
+
+  <div class="divider"></div>
+  <div class="blocked-head">Disabled sites</div>
+  <div class="blocked-list" id="blockedList"></div>
+
+  <div class="keys">
+    <div class="k"><kbd>A</kbd> slower</div>
+    <div class="k"><kbd>D</kbd> faster</div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
