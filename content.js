@@ -330,6 +330,12 @@ document.addEventListener('keydown', (e) => {
   } else if (e.key === 's' || e.key === 'S') {
     e.preventDefault();
     applySpeed(currentSpeed - STEP);
+  } else if (e.key === 'a' || e.key === 'A') {
+    e.preventDefault();
+    applySpeed(DEFAULT_SPEED);
+  } else if (e.key === 'a' || e.key === 'A') {
+    e.preventDefault();
+    applySpeed(DEFAULT_SPEED);
   }
 }, true);
 
