@@ -103,12 +103,42 @@ function bindYTNavigation() {
 function getAnchorVideo() {
   const videos = Array.from(document.querySelectorAll('video'));
   if (!videos.length) return null;
-  return videos.reduce((best, v) => {
+
+  const vph = window.innerHeight;
+  const vpw = window.innerWidth;
+  const vpCx = vpw / 2;
+  const vpCy = vph / 2;
+
+  let best = null;
+  let bestScore = -Infinity;
+
+  for (const v of videos) {
     const r = v.getBoundingClientRect();
-    const area = r.width * r.height;
-    const br = best ? best.getBoundingClientRect() : { width: 0, height: 0 };
-    return area > br.width * br.height ? v : best;
-  }, null);
+    // Skip videos entirely off-screen
+    if (r.bottom <= 0 || r.top >= vph || r.right <= 0 || r.left >= vpw) continue;
+    // Skip tiny videos (avatars, thumbnails, ads)
+    if (r.width < 80 || r.height < 50) continue;
+
+    // Visible intersection area
+    const visW = Math.min(r.right, vpw) - Math.max(r.left, 0);
+    const visH = Math.min(r.bottom, vph) - Math.max(r.top, 0);
+    const visArea = visW * visH;
+
+    // Distance of video centre from viewport centre (lower = better)
+    const cx = r.left + r.width / 2;
+    const cy = r.top + r.height / 2;
+    const dist = Math.hypot(cx - vpCx, cy - vpCy);
+
+    // Score: maximise visible area, break ties by proximity to viewport centre
+    const score = visArea - dist * 0.5;
+
+    if (score > bestScore) {
+      bestScore = score;
+      best = v;
+    }
+  }
+
+  return best;
 }
 
 function buildHUD() {
@@ -268,6 +298,10 @@ function showOrUpdateHUD() {
 window.addEventListener('resize', () => {
   if (hud && parseFloat(hud.style.opacity) > 0) positionHUD();
 });
+
+window.addEventListener('scroll', () => {
+  if (hud && parseFloat(hud.style.opacity) > 0) positionHUD();
+}, { passive: true });
 
 // Proximity hover — works even when overlays block the video element
 let _hoverActive = false;
